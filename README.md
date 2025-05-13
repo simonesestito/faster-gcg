@@ -1,4 +1,4 @@
-# faster-gcg
+# Faster-GCG
 Implementation of Faster-GCG Algorithm (Li et al., 2024)
 
 
