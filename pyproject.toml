@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools >= 42"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+homepage = "https://github.com/simonesestito/faster-gcg"
+repository = "https://github.com/simonesestito/faster-gcg"
+
+[project]
+name = "faster-gcg"
+version = "0.1.0"
+authors = [
+    { name="Simone Sestito", email="simone@simonesestito.com" },
+    { name="Davide Gabrielli", email="me@davegabe.it" },
+]
+description = "Implementation of Faster-GCG algorithm (Li et al., 2024)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"
+license-files = ["LICEN[CS]E*"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "torch >= 2.7.0",
+    "transformers >= 4.51.3",
+]
