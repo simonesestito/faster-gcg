@@ -169,7 +169,6 @@ class FasterGCG:
             The top-k substitutions for each token in the attack input IDs,
             which is a tensor of shape (top_k_substitutions_length, vocab_size).
         """
-        print(f'{run_context.x_attack_token_ids.shape=}')
         attack_one_hot = F.one_hot(run_context.x_attack_token_ids, num_classes=self.vocab_size).float().detach()
         attack_one_hot.requires_grad_(True)
         assert attack_one_hot.ndim == 2, \
@@ -179,6 +178,14 @@ class FasterGCG:
 
         attack_one_hot_grads = torch.autograd.grad(loss, attack_one_hot)[0]     # [adversarial_tokens_length, vocab_size]
         attack_one_hot_grads /= attack_one_hot_grads.norm(dim=-1, keepdim=True)
+
+        # Add the regularization term to the gradients,
+        # which is the distance between the token embeddings.
+        # This means that attack_one_hot_grads[i, j] += lambda * || embedding_x[i] - embedding_j ||
+        embeddings_j = run_context.model.get_input_embeddings().weight.data  # [vocab_size, embed_dim]
+        embeddings_i = embeddings_j[run_context.x_attack_token_ids]          # [adversarial_tokens_length, embed_dim]
+        embeddings_distance = torch.norm(embeddings_i[:, None] - embeddings_j[None, :], dim=-1)
+        attack_one_hot_grads += self.lambda_reg_embeddings_distance * embeddings_distance
 
         # Now, for each token in the prefix, we need to find the top-k replacements with the lowest gradient
         best_replacements = torch.topk(attack_one_hot_grads, self.top_k_substitutions_length, dim=-1, largest=False).indices
