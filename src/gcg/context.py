@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import torch
 import transformers
 
-from src.gcg.record_set import RecordSet
+from src.gcg.tensor_set import TensorSet
 
 
 @dataclass
@@ -55,4 +55,4 @@ class GCGRunContext:
     The historical record set of the Faster-GCG algorithm.
     It is necessary to avoid self loop in the optimization process.
     """
-    record_set: RecordSet
+    record_set: TensorSet

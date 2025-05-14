@@ -3,7 +3,8 @@ import torch.nn.functional as F
 import transformers
 
 from .context import GCGRunContext
-from .record_set import RecordSet
+from .early_stop import LossEarlyStop
+from .tensor_set import TensorSet
 from .loss import LossFunction, loss_cw
 
 class FasterGCG:
@@ -43,7 +44,7 @@ class FasterGCG:
                             model: transformers.PreTrainedModel,
                             x_fixed_input: str,
                             y_target_output: str,
-                            ) -> str:
+                            ) -> tuple[str, int]:
         """
         Tokenize the input and target output, and perform the attack on the model using the GCG algorithm.
         This function is the main entry point for the attack, when the input and target output are not already tokenized.
@@ -63,20 +64,20 @@ class FasterGCG:
         x_fixed_input_ids = tokenizer(x_fixed_input, return_tensors="pt").input_ids.to(model.device)
         y_target_output_ids = tokenizer(y_target_output, return_tensors="pt").input_ids.to(model.device)
 
-        x_suffix_ids = self.attack(
+        x_suffix_ids, steps = self.attack(
             model=model,
             x_fixed_input=x_fixed_input_ids,
             y_target_output=y_target_output_ids,
         )
         x_suffix = tokenizer.decode(x_suffix_ids.view(-1), skip_special_tokens=True)
-        return x_suffix
+        return x_suffix, steps
 
 
     def attack(self,
                model: transformers.PreTrainedModel,
                x_fixed_input: torch.Tensor | None,
                y_target_output: torch.Tensor,
-               ) -> torch.Tensor:
+               ) -> tuple[torch.Tensor, int]:
         """
         Perform the attack on the model using the GCG algorithm.
         This function is the main entry point for the attack.
@@ -90,14 +91,17 @@ class FasterGCG:
         :param y_target_output:
             The target tensor, which contains the target tokens to be attacked.
         :return:
-            The adversarial tokens, which are the optimized tokens to be used for the attack.
-            This tensor should be of shape (batch_size, seq_len).
+            - The adversarial tokens, as tensor input IDs, which are the optimized tokens to be used for the attack.
+              This tensor should be of shape (batch_size, seq_len).
+            - The number of iterations performed for the optimization process.
         """
         # Generate the attack input suffix to give to the model
         x_attack_tokens = self._generate_one_hot_tokens(sequence_length=self.vocab_size)
 
         # Create an empty historical record set, to avoid self loop
-        record_set = RecordSet()
+        record_set = TensorSet(hidden_size=self.adversarial_tokens_length,
+                               device=x_attack_tokens.device,
+                               dtype=x_attack_tokens.dtype)
 
         run_context = GCGRunContext(
             model=model,
@@ -109,11 +113,20 @@ class FasterGCG:
             record_set=record_set,
         )
 
+        early_stop = LossEarlyStop(patience=10)
+
+        step_i = 0
         for step_i in range(self.num_iterations):
             # Generate the attack input suffix to give to the model
             loss = self._run_step(run_context)
 
-            # TODO: implement early stopping on loss convergence
+            # Do early stopping
+            early_stop.step(loss)
+            if early_stop:
+                break
+
+        # Return the optimized attack tokens
+        return run_context.x_attack_token_ids, step_i + 1
 
 
 
@@ -213,8 +226,33 @@ class FasterGCG:
         # Compute the top-k substitutions for every token in the attack tokens.
         top_k_substitutions = self._compute_top_k_substitutions(run_context)
 
+        # To later perform the greedy sampling, keep a table to understand what's the next index j
+        # to sample from the top-k substitutions, for each token i.
+        next_top_k_substitution_index = torch.zeros((self.adversarial_tokens_length,), dtype=torch.int64)
+
         # Exploration part:
         # Populate the batch size with the substituted samples, according to the greedy sampling strategy.
-        # TODO
+        b = 1   # Still, keep the first sample in the batch, which is the original one
+        x_batch = run_context.x_attack_token_ids.repeat(self.batch_size + 1, 1)
+        while b < self.batch_size:
+            # Choose the token to replace, from 0 to N - 1 inclusive
+            i = b % self.adversarial_tokens_length
 
-        raise NotImplementedError("FasterGCG _run_step method not implemented yet")
+            # Greedy sample from the top-k substitutions
+            next_top_k_index = next_top_k_substitution_index[i]
+            next_top_k_substitution_index[i] += 1
+
+            # Perform the token replacement
+            x_batch[b, i] = top_k_substitutions[i, next_top_k_index]
+
+            # Avoid the self loop
+            if x_batch[b] not in run_context.record_set:
+                run_context.record_set.add(x_batch[b])
+                b += 1
+
+        # Finally, keep only the best X in x_batch
+        loss_batch = self._compute_gcg_loss(x_batch, run_context)
+        best_x_index = torch.argmin(loss_batch)
+        run_context.x_attack_token_ids = x_batch[best_x_index]
+
+        return loss_batch[best_x_index]
