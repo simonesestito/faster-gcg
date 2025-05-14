@@ -35,26 +35,3 @@ def loss_ce(input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         target=target.view(-1),
         reduction='none',
     ).view(batch_size, -1).mean(dim=1)
-
-
-def loss_cw(input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-    """
-    Implement the Carlini and Wagner loss function.
-    This loss function is used to generate adversarial examples for deep learning models.
-
-    :param input:
-        The input tensor, which contains the output logits of the model,
-        of shape (batch_size, seq_len, vocab_size).
-    :param target:
-        The target tensor, which is the true labels,
-        of shape (batch_size, seq_len).
-    :return:
-        The loss value per sample in the batch, so the shape is (batch_size,).
-    """
-    per_sample_ce_loss = loss_ce(input, target)
-
-    # TODO: Implement the regularization term
-    #       indicated in the Faster-GCG paper
-    #       in equation 8
-
-    return per_sample_ce_loss
