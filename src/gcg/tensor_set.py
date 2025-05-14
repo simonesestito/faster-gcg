@@ -9,11 +9,17 @@ class TensorSet:
     All tensors in the record set must be on the same device, with the same dtype and shape.
     """
 
-    def __init__(self, hidden_size: int, device: torch.device, dtype: torch.dtype):
+    def __init__(self, hidden_size: int, device: torch.device, dtype: torch.dtype, initial_capacity: int = 10):
         """
         Initialize the RecordSet class.
+
+        :param hidden_size: The size of the hidden dimension.
+        :param device: The device on which the tensors will be stored.
+        :param dtype: The data type of the tensors.
+        :param initial_capacity: The initial capacity of the record set.
         """
-        self.container = torch.zeros((0, hidden_size), device=device, dtype=dtype)
+        assert initial_capacity > 0, "Initial capacity must be greater than 0"
+        self.container = torch.zeros((initial_capacity, hidden_size), device=device, dtype=dtype)
         self.length = 0
         self.device = device
         self.dtype = dtype
