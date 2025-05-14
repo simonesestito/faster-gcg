@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import torch
 import transformers
 
-from src.gcg.tensor_set import TensorSet
+from .tensor_set import TensorSet
 
 
 @dataclass
