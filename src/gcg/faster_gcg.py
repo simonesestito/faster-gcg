@@ -255,7 +255,7 @@ class FasterGCG:
 
         # Exploration part:
         # Populate the batch size with the substituted samples, according to the greedy sampling strategy.
-        b = 1   # Still, keep the first sample in the batch, which is the original one
+        b = 0   # Still, keep the first sample in the batch, which is the original one (last one)
         x_batch = run_context.x_attack_token_ids.repeat(self.batch_size + 1, 1)
         while b < self.batch_size:
             # Choose the token to replace, from 0 to N - 1 inclusive
