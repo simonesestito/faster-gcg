@@ -1,0 +1,1 @@
+from .faster_gcg import FasterGCG
