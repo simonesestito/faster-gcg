@@ -95,6 +95,8 @@ class FasterGCG:
               This tensor should be of shape (batch_size, seq_len).
             - The number of iterations performed for the optimization process.
         """
+        model.eval()
+
         # Generate the attack input suffix to give to the model
         x_attack_tokens = self._generate_one_hot_tokens(sequence_length=self.vocab_size)
 
