@@ -95,6 +95,7 @@ class FasterGCG:
               This tensor should be of shape (batch_size, seq_len).
             - The number of iterations performed for the optimization process.
         """
+        model_was_training = model.training
         model.eval()
 
         # Generate the attack input suffix to give to the model
@@ -127,9 +128,12 @@ class FasterGCG:
             if early_stop:
                 break
 
+        # Restore the model to its original state
+        if model_was_training:
+            model.train()
+
         # Return the optimized attack tokens
         return run_context.x_attack_token_ids, step_i + 1
-
 
 
     @torch.no_grad()
