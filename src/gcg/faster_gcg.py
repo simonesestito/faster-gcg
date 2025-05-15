@@ -285,10 +285,14 @@ class FasterGCG:
             next_top_k_substitution_index[i] += 1
 
             # Perform the token replacement
-            x_batch[b, i] = top_k_substitutions[i, next_top_k_index]
+            # However, in some cases it may happen that next_top_k_index is out of bounds,
+            # so we handle that by replacing it with the first one,
+            # and ignoring the self loop check.
+            is_valid_next_top_k_index = next_top_k_index < self.top_k_substitutions_length
+            x_batch[b, i] = top_k_substitutions[i, next_top_k_index if is_valid_next_top_k_index else 0]
 
             # Avoid the self loop
-            if x_batch[b] not in run_context.record_set:
+            if not is_valid_next_top_k_index or x_batch[b] not in run_context.record_set:
                 run_context.record_set.add(x_batch[b])
                 b += 1
 
