@@ -274,7 +274,6 @@ class FasterGCG:
             next_top_k_substitution_index[i] += 1
 
             # Perform the token replacement
-            print(f'{b=}, {i=}, {next_top_k_index=}')
             x_batch[b, i] = top_k_substitutions[i, next_top_k_index]
 
             # Avoid the self loop
@@ -283,7 +282,8 @@ class FasterGCG:
                 b += 1
 
         # Finally, keep only the best X in x_batch
-        loss_batch = self._compute_gcg_loss(x_batch, run_context)
+        x_batch_one_hot = F.one_hot(x_batch, num_classes=self.vocab_size).float().detach()
+        loss_batch = self._compute_gcg_loss(x_batch_one_hot, run_context)
         best_x_index = torch.argmin(loss_batch)
         run_context.x_attack_token_ids = x_batch[best_x_index]
 
