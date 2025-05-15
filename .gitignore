@@ -1,2 +1,3 @@
 dist/
 src/faster_gcg.egg-info/
+__pycache__/
