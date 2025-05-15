@@ -247,7 +247,7 @@ class FasterGCG:
         output_logits = run_context.model(inputs_embeds=full_input_embed)\
                             .logits[:, -run_context.y_target_output_ids.size(-1)-1:-1]
 
-        per_sample_loss = loss_ce(output_logits, run_context.y_target_output_ids)
+        per_sample_loss = loss_ce(output_logits, run_context.y_target_output_ids.repeat(batch_size, 1))
         assert per_sample_loss.shape == (batch_size,), \
             f'Expected per_sample_loss to be of shape (batch_size,), but got {per_sample_loss.shape}'
 
