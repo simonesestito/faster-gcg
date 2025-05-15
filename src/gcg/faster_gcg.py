@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 import transformers
+from tqdm import tqdm
 
 from .context import GCGRunContext
 from .early_stop import LossEarlyStop
@@ -53,6 +54,7 @@ class FasterGCG:
                             model: transformers.PreTrainedModel,
                             x_fixed_input: str | None,
                             y_target_output: str,
+                            show_progress: bool = False,
                             ) -> tuple[str, str, int]:
         """
         Tokenize the input and target output, and perform the attack on the model using the GCG algorithm.
@@ -67,6 +69,8 @@ class FasterGCG:
             The input string, which contains the input text to be used as a fixed prefix in the attack.
         :param y_target_output:
             The target string, which is what the model should output, ideally.
+        :param show_progress:
+            Whether to show the progress bar of the optimization process.
         :return:
             - The adversarial suffix string, to be appended to the input string to perform the attack.
             - The response of the model being attacked
@@ -82,6 +86,7 @@ class FasterGCG:
             model=model,
             x_fixed_input=x_fixed_input_ids,
             y_target_output=y_target_output_ids,
+            show_progress=show_progress,
         )
         x_suffix = tokenizer.decode(x_suffix_ids.view(-1), skip_special_tokens=True)
 
@@ -105,6 +110,7 @@ class FasterGCG:
                model: transformers.PreTrainedModel,
                x_fixed_input: torch.Tensor | None,
                y_target_output: torch.Tensor,
+               show_progress: bool = False,
                ) -> tuple[torch.Tensor, int]:
         """
         Perform the attack on the model using the GCG algorithm.
@@ -118,6 +124,8 @@ class FasterGCG:
             If None, the input of the model will be only the attack tokens to optimize.
         :param y_target_output:
             The target tensor, which contains the target tokens to be attacked.
+        :param show_progress:
+            Whether to show the progress bar of the optimization process.
         :return:
             - The adversarial tokens, as tensor input IDs, which are the optimized tokens to be used for the attack.
               This tensor should be of shape (batch_size, seq_len).
@@ -147,7 +155,10 @@ class FasterGCG:
         early_stop = LossEarlyStop(patience=10)
 
         step_i = 0
-        for step_i in range(self.num_iterations):
+        iterations_range = range(self.num_iterations)
+        if show_progress:
+            iterations_range = tqdm(iterations_range, desc="Running GCG attack", unit="iteration")
+        for step_i in iterations_range:
             # Generate the attack input suffix to give to the model
             loss = self._run_step(run_context)
 
