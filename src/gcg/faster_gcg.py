@@ -40,6 +40,13 @@ class FasterGCG:
         self.vocab_size = vocab_size
         self.lambda_reg_embeddings_distance = lambda_reg_embeddings_distance
 
+        # Make greedy-sampling always possible
+        max_batch_size = self.adversarial_tokens_length * (self.top_k_substitutions_length - 1)
+        if self.batch_size > max_batch_size:
+            raise ValueError(f'Batch size {self.batch_size} is too large for the given adversarial tokens length '
+                             f'({self.adversarial_tokens_length}) and top-k substitutions length '
+                             f'({self.top_k_substitutions_length}). The maximum batch size is {max_batch_size}.')
+
 
     def tokenize_and_attack(self,
                             tokenizer: transformers.PreTrainedTokenizerBase,
@@ -266,6 +273,7 @@ class FasterGCG:
             next_top_k_substitution_index[i] += 1
 
             # Perform the token replacement
+            print(f'{b=}, {i=}, {next_top_k_index=}')
             x_batch[b, i] = top_k_substitutions[i, next_top_k_index]
 
             # Avoid the self loop
