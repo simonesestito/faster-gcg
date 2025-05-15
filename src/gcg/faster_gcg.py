@@ -214,19 +214,20 @@ class FasterGCG:
             The loss value for the GCG algorithm, which is a scalar tensor.
         """
         assert attack_one_hot.ndim == 3, \
-            f'Expected attack_one_hot to be batched ({attack_one_hot.ndim}D instead of 3D)'
+            f'Expected attack_one_hot to be batched ({attack_one_hot.ndim}D instead of 3D), got with actual shape {attack_one_hot.shape}'
         batch_size = attack_one_hot.size(0)
         assert attack_one_hot.shape == (batch_size, self.adversarial_tokens_length, self.vocab_size), \
             f'Expected attack_one_hot to be of shape (batch_size, {self.adversarial_tokens_length}, {self.vocab_size}), but got {attack_one_hot.shape}'
 
         attack_embed = F.linear(attack_one_hot, run_context.model.get_input_embeddings().weight.t())
 
-        full_input_embed = []
+        full_input_embed_list: list[torch.Tensor] = []
         if run_context.x_fixed_input_embed is not None:
-            full_input_embed.append(run_context.x_fixed_input_embed)
-        full_input_embed.append(attack_embed)
-        full_input_embed.append(run_context.y_target_output_embed)
-        full_input_embed = torch.cat(full_input_embed, dim=1)
+            full_input_embed_list.append(run_context.x_fixed_input_embed)
+        full_input_embed_list.append(attack_embed)
+        full_input_embed_list.append(run_context.y_target_output_embed.repeat(batch_size, 1, 1))
+
+        full_input_embed: torch.Tensor = torch.cat(full_input_embed_list, dim=1)
 
         # Compute the CE-loss, using teacher forcing.
         # The use of teacher forcing SHOULD be okay, since it is used in nanoGCG:
