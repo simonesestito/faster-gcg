@@ -93,15 +93,15 @@ class FasterGCG:
         # Get the actual response of the model being attacked
         full_text = x_suffix_ids
         if x_fixed_input_ids is not None:
-            full_text = torch.cat([x_fixed_input_ids, x_suffix_ids], dim=1)
+            full_text = torch.cat([x_fixed_input_ids, x_suffix_ids], dim=-1)
 
         with torch.no_grad():
             y_attack_response_ids = model.generate(
-                input_ids=full_text,
+                input_ids=full_text.unsqueeze(0),
                 max_new_tokens=y_target_output_ids.size(-1),
                 do_sample=False,
-            )
-            y_attack_response = tokenizer.decode(y_attack_response_ids[0], skip_special_tokens=True)
+            )[0][full_text.size(-1):]
+            y_attack_response = tokenizer.decode(y_attack_response_ids, skip_special_tokens=True)
 
         return x_suffix, y_attack_response, steps
 
