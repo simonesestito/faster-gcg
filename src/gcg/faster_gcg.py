@@ -292,7 +292,7 @@ class FasterGCG:
             # so we handle that by replacing it with the first one,
             # and ignoring the self loop check.
             is_valid_next_top_k_index = next_top_k_index < self.top_k_substitutions_length
-            x_batch[b, i] = top_k_substitutions[i, next_top_k_index if is_valid_next_top_k_index else 0]
+            x_batch[b, i] = top_k_substitutions[i, next_top_k_index % self.top_k_substitutions_length]
 
             # Avoid the self loop
             if not is_valid_next_top_k_index or x_batch[b] not in run_context.record_set:
