@@ -55,7 +55,7 @@ class FasterGCG:
                             x_fixed_input: str | None,
                             y_target_output: str,
                             show_progress: bool = False,
-                            ) -> tuple[str, str, int]:
+                            ) -> tuple[torch.Tensor, torch.Tensor, str, str, int]:
         """
         Tokenize the input and target output, and perform the attack on the model using the GCG algorithm.
         This function is the main entry point for the attack, when the input and target output are not already tokenized.
@@ -72,8 +72,11 @@ class FasterGCG:
         :param show_progress:
             Whether to show the progress bar of the optimization process.
         :return:
+            - The adversarial tokens, as tensor input IDs, which are the optimized tokens to be used for the attack.
+              This tensor should be of shape (batch_size, seq_len).
+            - The response of the model being attack, as tensor input IDs.
             - The adversarial suffix string, to be appended to the input string to perform the attack.
-            - The response of the model being attacked
+            - The response of the model being attacked, as string.
             - The number of iterations performed for the optimization process.
         """
         x_fixed_input_ids: torch.Tensor | None = None
@@ -103,7 +106,7 @@ class FasterGCG:
             )[0][full_text.size(-1):]
             y_attack_response = tokenizer.decode(y_attack_response_ids, skip_special_tokens=True)
 
-        return x_suffix, y_attack_response, steps
+        return x_suffix_ids, y_attack_response_ids, x_suffix, y_attack_response, steps
 
 
     def attack(self,
