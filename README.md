@@ -1,5 +1,7 @@
 # Faster-GCG
-Implementation of Faster-GCG Algorithm (Li et al., 2024)
+Third-party implementation of Faster-GCG Algorithm (Li et al., 2024).
+
+This was necessary to our team since at the time of writing, the official was not already available to the public.
 
 # Usage
 ```sh
