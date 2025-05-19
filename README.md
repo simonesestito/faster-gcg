@@ -23,7 +23,7 @@ by Xiao Li, Zhuhong Li, Qiongxiu Li, Bingze Lee, Jinghao Cui, Xiaolin Hu
 **Implementation license**
 
     Faster-GCG Implementation
-    Copyright (C) 2025  Simone Sestito, Davide Gabrielli
+    Copyright (C) 2025  Simone Sestito
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
