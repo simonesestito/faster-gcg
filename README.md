@@ -1,11 +1,50 @@
 # Faster-GCG
 Implementation of Faster-GCG Algorithm (Li et al., 2024)
 
+# Usage
+```sh
+git clone https://github.com/simonesestito/faster-gcg
+pip install ./faster-gcg/
+```
+
+You can refer to the following example Python code:
+```python
+import gcg
+from transformers import PreTrainedModel, PreTrainedTokenizerBase
+
+model: PreTrainedModel = ...
+tokenizer: PreTrainedTokenizerBase = ...
+
+attacker = gcg.FasterGCG(
+      num_iterations=10_000,
+      batch_size=900,
+      adversarial_tokens_length=15,
+      top_k_substitutions_length=64,
+      vocab_size=tokenizer.vocab_size,
+      lambda_reg_embeddings_distance=0.1,
+)
+
+target_response = ' and it was a sunny day.'
+
+x_suffix_ids, y_attack_response_ids, x_attack_str, y_response_str, steps = \
+    attacker.tokenize_and_attack(tokenizer,
+                                 model,
+                                 x_fixed_input=None,
+                                 y_target_output=target_response,
+                                 show_progress=True)
+
+print(f"Attack string: {x_attack_str}")
+print(f"Attack response: {y_response_str}")
+print(f"Desired response: {target_response}")
+print(f"Steps: {steps}")
+```
+
 
 ## License
 Based on the algorithm originally published
 in [Faster-GCG: Efficient Discrete Optimization Jailbreak Attacks against Aligned Large Language Models](https://arxiv.org/abs/2410.15362)
 by Xiao Li, Zhuhong Li, Qiongxiu Li, Bingze Lee, Jinghao Cui, Xiaolin Hu
+
 
 **Paper citation**
 ```bibtex
