@@ -127,7 +127,6 @@ class StandardGCG(GCGAlgorithm):
         # Replacement token for candidate i-th is the top-k substitution for token i, at index top_k_random_replacement[i]
         search_width_range = torch.arange(self.batch_size, device=attack_token_ids.device)
         top_k_random_replacement = top_k_token_replacements[search_width_range, top_k_random_replacement_indexes]
-        print(f'{top_k_random_replacement.shape=}')
         one_hot_random_replacement = F.one_hot(top_k_random_replacement, self.vocab_size)
         candidates[search_width_range, token_indexes] = one_hot_random_replacement
 
