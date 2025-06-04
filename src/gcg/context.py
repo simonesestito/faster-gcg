@@ -72,4 +72,4 @@ class GCGRunContext:
     The historical record set of the Faster-GCG algorithm.
     It is necessary to avoid self loop in the optimization process.
     """
-    record_set: TensorSet
+    record_set: TensorSet | None

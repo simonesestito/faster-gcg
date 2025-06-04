@@ -15,4 +15,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Faster-GGC-Lib.  If not, see <http://www.gnu.org/licenses/>.
 
+from .base_gcg import GCGAlgorithm
 from .faster_gcg import FasterGCG
+from .standard_gcg import StandardGCG
